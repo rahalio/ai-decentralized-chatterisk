@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: Aggregates API
+  version: 0.1.0
+  description: Volume-adjusted project scores, model version, partner badge (BR-1, BR-2, BR-9, BR-11).
+  x-domain: agg
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.chatterisk.local
+security:
+  - bearerAuth: []
+  - apiKey: []
+tags:
+  - name: Aggregates
+    description: Volume-adjusted project scores
+paths:
+  /v1/projects/{projectId}/aggregates:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: listProjectAggregates
+      tags: [Aggregates]
+      summary: List windowed aggregates for a project
+      x-repository: Aggregate
+      x-dynamodb:
+        entityType: AGGREGATE
+        pkPatternTemplate: 'AGGREGATE#${aggregateId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        gsi1PKPatternTemplate: 'PROJECT#${projectId}'
+        createdAtField: computedAt
+        updatedAtField: computedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: window
+          in: query
+          schema:
+            $ref: ./aggregates.schemas.yaml#/components/schemas/ScoreWindow
+      responses:
+        '200':
+          description: Aggregates page
+          content:
+            application/json:
+              schema:
+                $ref: ./aggregates.schemas.yaml#/components/schemas/ProjectAggregateListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/aggregates/latest:
+    get:
+      operationId: getLatestAggregate
+      tags: [Aggregates]
+      summary: Latest volume-adjusted score by project or contract
+      x-repository: Aggregate
+      x-dynamodb:
+        entityType: AGGREGATE
+        pkPatternTemplate: 'AGGREGATE#${aggregateId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: computedAt
+        updatedAtField: computedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: contractAddress
+          in: query
+          schema:
+            type: string
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: window
+          in: query
+          schema:
+            $ref: ./aggregates.schemas.yaml#/components/schemas/ScoreWindow
+            default: 7d
+      responses:
+        '200':
+          description: Latest aggregate
+          content:
+            application/json:
+              schema:
+                $ref: ./aggregates.schemas.yaml#/components/schemas/ProjectAggregateResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/partner/risk-badge:
+    get:
+      operationId: getPartnerRiskBadge
+      tags: [Aggregates]
+      summary: Wallet-facing compact social-risk badge
+      x-repository: Aggregate
+      security:
+        - apiKey: []
+      parameters:
+        - name: contractAddress
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Badge payload
+          content:
+            application/json:
+              schema:
+                $ref: ./aggregates.schemas.yaml#/components/schemas/PartnerRiskBadgeResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

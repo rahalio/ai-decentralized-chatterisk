@@ -1,0 +1,1 @@
+export { makeService } from '../infrastructure';

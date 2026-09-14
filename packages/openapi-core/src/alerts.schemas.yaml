@@ -1,0 +1,166 @@
+openapi: 3.1.0
+info:
+  title: Alerts schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    AlertId:
+      type: string
+      pattern: '^alt_[0-9A-HJKMNP-TV-Z]{26}$'
+    PolicyId:
+      type: string
+      pattern: '^plc_[0-9A-HJKMNP-TV-Z]{26}$'
+    AlertKind:
+      type: string
+      enum: [score_drop, high_negativity, bot_surge]
+    AlertStatus:
+      type: string
+      enum: [open, acknowledged, snoozed, closed]
+
+    RiskAlert:
+      type: object
+      required:
+        - alertId
+        - projectId
+        - kind
+        - status
+        - triggeredAt
+      properties:
+        alertId:
+          $ref: '#/components/schemas/AlertId'
+        projectId:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AlertKind'
+        status:
+          $ref: '#/components/schemas/AlertStatus'
+        window:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high]
+        triggeredAt:
+          type: string
+          format: date-time
+        acknowledgedAt:
+          type: string
+          format: date-time
+        snoozedUntil:
+          type: string
+          format: date-time
+        disclaimer:
+          type: string
+          default: 'Risk intelligence only; not investment advice.'
+
+    AlertPolicy:
+      type: object
+      required:
+        - policyId
+        - workspaceId
+        - threshold
+      properties:
+        policyId:
+          $ref: '#/components/schemas/PolicyId'
+        workspaceId:
+          type: string
+        threshold:
+          type: number
+          description: Adjusted-score collapse threshold (BR-5).
+        window:
+          type: string
+          default: 7d
+        routing:
+          type: string
+        niaLocked:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AlertPolicyCreate:
+      type: object
+      required:
+        - workspaceId
+        - threshold
+      properties:
+        workspaceId:
+          type: string
+        threshold:
+          type: number
+        window:
+          type: string
+          default: 7d
+        routing:
+          type: string
+
+    AlertSnoozeRequest:
+      type: object
+      required:
+        - until
+      properties:
+        until:
+          type: string
+          format: date-time
+        note:
+          type: string
+
+    RiskAlertListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskAlert'
+        nextCursor:
+          type: string
+
+    RiskAlertResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RiskAlert'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    RiskAlertListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RiskAlertListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    AlertPolicyListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertPolicy'
+
+    AlertPolicyResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AlertPolicy'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    AlertPolicyListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AlertPolicyListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

@@ -1,0 +1,232 @@
+openapi: 3.1.0
+info:
+  title: Comments schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    CommentId:
+      type: string
+      pattern: '^cmt_[0-9A-HJKMNP-TV-Z]{26}$'
+    BotRulingId:
+      type: string
+      pattern: '^bot_[0-9A-HJKMNP-TV-Z]{26}$'
+    RetentionJobId:
+      type: string
+      pattern: '^rtn_[0-9A-HJKMNP-TV-Z]{26}$'
+    SocialChannel:
+      type: string
+      enum: [twitter, telegram, facebook, other]
+    NiaDisclaimer:
+      type: string
+      default: 'Risk intelligence only; not investment advice.'
+
+    SocialComment:
+      type: object
+      required:
+        - commentId
+        - projectId
+        - channel
+        - textPurged
+        - botSuspect
+        - createdAt
+      properties:
+        commentId:
+          $ref: '#/components/schemas/CommentId'
+        projectId:
+          type: string
+        channel:
+          $ref: '#/components/schemas/SocialChannel'
+        text:
+          type: string
+          description: Cleaned text; omitted when purged by retention (BR-8).
+        textPurged:
+          type: boolean
+        tanhScore:
+          type: number
+          minimum: -1
+          maximum: 1
+        positiveProbability:
+          type: number
+          minimum: 0
+          maximum: 1
+        negativeProbability:
+          type: number
+          minimum: 0
+          maximum: 1
+        botSuspect:
+          type: boolean
+        coordinatedInauthentic:
+          type: boolean
+        modelVersion:
+          type: string
+        permalink:
+          type: string
+          format: uri
+        publishedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        disclaimer:
+          $ref: '#/components/schemas/NiaDisclaimer'
+
+    SocialCommentCreate:
+      type: object
+      required:
+        - channel
+        - text
+      properties:
+        channel:
+          $ref: '#/components/schemas/SocialChannel'
+        text:
+          type: string
+        externalId:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+
+    BotRuling:
+      type: object
+      required:
+        - rulingId
+        - commentId
+        - kind
+        - createdAt
+      properties:
+        rulingId:
+          $ref: '#/components/schemas/BotRulingId'
+        commentId:
+          $ref: '#/components/schemas/CommentId'
+        projectId:
+          type: string
+        kind:
+          type: string
+          enum: [bot_suspect, coordinated_inauthentic, reverse]
+        note:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    BotRulingCreate:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum: [bot_suspect, coordinated_inauthentic, reverse]
+        note:
+          type: string
+
+    RetentionPolicy:
+      type: object
+      required:
+        - rawCommentDays
+        - aggregateRetain
+      properties:
+        rawCommentDays:
+          type: integer
+          minimum: 1
+        aggregateRetain:
+          type: boolean
+          description: Aggregates kept after raw text is purged (BR-8).
+
+    RetentionJob:
+      type: object
+      required:
+        - jobId
+        - status
+        - createdAt
+      properties:
+        jobId:
+          $ref: '#/components/schemas/RetentionJobId'
+        status:
+          $ref: ./common/primitives.yaml#/components/schemas/JobStatus
+        purgedCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    SocialCommentListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialComment'
+        nextCursor:
+          type: string
+
+    SocialCommentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/SocialComment'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    SocialCommentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/SocialCommentListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    BotRulingResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/BotRuling'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    BotRulingListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BotRuling'
+        nextCursor:
+          type: string
+
+    BotRulingListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/BotRulingListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    RetentionPolicyResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RetentionPolicy'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    RetentionJobResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RetentionJob'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

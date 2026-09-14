@@ -1,0 +1,225 @@
+openapi: 3.1.0
+info:
+  title: Projects API
+  version: 0.1.0
+  description: |
+    Crypto project registry and listing-desk watchlist.
+    Scores are risk intelligence, not investment advice.
+  x-domain: prj
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.chatterisk.local
+security:
+  - bearerAuth: []
+  - apiKey: []
+tags:
+  - name: Projects
+    description: Token and project registry
+paths:
+  /v1/projects:
+    get:
+      operationId: listRiskProjects
+      tags: [Projects]
+      summary: List registered projects
+      x-repository: Project
+      x-dynamodb:
+        entityType: PROJECT
+        pkPatternTemplate: 'PROJECT#${projectId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        usePkQuery: false
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: watched
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Projects page
+          content:
+            application/json:
+              schema:
+                $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: registerRiskProject
+      tags: [Projects]
+      summary: Register a project
+      x-repository: Project
+      x-dynamodb:
+        entityType: PROJECT
+        pkPatternTemplate: 'PROJECT#${projectId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectCreate
+      responses:
+        '201':
+          description: Project registered
+          content:
+            application/json:
+              schema:
+                $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/projects/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          $ref: ./projects.schemas.yaml#/components/schemas/ProjectId
+    get:
+      operationId: getRiskProject
+      tags: [Projects]
+      summary: Get a project
+      x-repository: Project
+      x-dynamodb:
+        entityType: PROJECT
+        pkPatternTemplate: 'PROJECT#${projectId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    patch:
+      operationId: updateRiskProject
+      tags: [Projects]
+      summary: Update project metadata
+      x-repository: Project
+      x-dynamodb:
+        entityType: PROJECT
+        pkPatternTemplate: 'PROJECT#${projectId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectUpdate
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/projects/{projectId}/watch:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          $ref: ./projects.schemas.yaml#/components/schemas/ProjectId
+    post:
+      operationId: addProjectToWatchlist
+      tags: [Projects]
+      summary: Add project to listing-desk watchlist
+      x-repository: Project
+      x-dynamodb:
+        entityType: PROJECT
+        pkPatternTemplate: 'PROJECT#${projectId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      responses:
+        '200':
+          description: Watched
+          content:
+            application/json:
+              schema:
+                $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    delete:
+      operationId: removeProjectFromWatchlist
+      tags: [Projects]
+      summary: Remove project from watchlist
+      x-repository: Project
+      x-dynamodb:
+        entityType: PROJECT
+        pkPatternTemplate: 'PROJECT#${projectId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Unwatched
+          content:
+            application/json:
+              schema:
+                $ref: ./projects.schemas.yaml#/components/schemas/RiskProjectResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

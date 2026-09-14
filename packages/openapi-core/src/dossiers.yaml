@@ -1,0 +1,111 @@
+openapi: 3.1.0
+info:
+  title: Dossiers API
+  version: 0.1.0
+  description: Committee export packs with model version and NIA watermark (BR-7, BR-10).
+  x-domain: dos
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.chatterisk.local
+security:
+  - bearerAuth: []
+tags:
+  - name: Dossiers
+    description: Committee export packages
+paths:
+  /v1/dossiers:
+    get:
+      operationId: listDossiers
+      tags: [Dossiers]
+      summary: List dossiers
+      x-repository: Dossier
+      x-dynamodb:
+        entityType: DOSSIER
+        pkPatternTemplate: 'DOSSIER#${dossierId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: createdAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Dossiers page
+          content:
+            application/json:
+              schema:
+                $ref: ./dossiers.schemas.yaml#/components/schemas/DossierExportListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createDossier
+      tags: [Dossiers]
+      summary: Generate a committee dossier
+      x-repository: Dossier
+      x-dynamodb:
+        entityType: DOSSIER
+        pkPatternTemplate: 'DOSSIER#${dossierId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: createdAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./dossiers.schemas.yaml#/components/schemas/DossierExportCreate
+      responses:
+        '201':
+          description: Dossier created
+          content:
+            application/json:
+              schema:
+                $ref: ./dossiers.schemas.yaml#/components/schemas/DossierExportResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/dossiers/{dossierId}:
+    get:
+      operationId: getDossier
+      tags: [Dossiers]
+      summary: Get dossier metadata and download URL
+      x-repository: Dossier
+      x-dynamodb:
+        entityType: DOSSIER
+        pkPatternTemplate: 'DOSSIER#${dossierId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: createdAt
+        softDeleteEnabled: false
+      parameters:
+        - name: dossierId
+          in: path
+          required: true
+          schema:
+            $ref: ./dossiers.schemas.yaml#/components/schemas/DossierId
+      responses:
+        '200':
+          description: Dossier
+          content:
+            application/json:
+              schema:
+                $ref: ./dossiers.schemas.yaml#/components/schemas/DossierExportResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

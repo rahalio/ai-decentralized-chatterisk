@@ -1,0 +1,248 @@
+openapi: 3.1.0
+info:
+  title: Alerts API
+  version: 0.1.0
+  description: Threshold events and per-workspace policies (BR-5).
+  x-domain: alt
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.chatterisk.local
+security:
+  - bearerAuth: []
+tags:
+  - name: Alerts
+    description: Threshold risk alerts
+paths:
+  /v1/alerts:
+    get:
+      operationId: listRiskAlerts
+      tags: [Alerts]
+      summary: List alert queue
+      x-repository: Alert
+      x-dynamodb:
+        entityType: ALERT
+        pkPatternTemplate: 'ALERT#${alertId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: triggeredAt
+        updatedAtField: triggeredAt
+        softDeleteEnabled: false
+        filterFields: [status, projectId]
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: status
+          in: query
+          schema:
+            $ref: ./alerts.schemas.yaml#/components/schemas/AlertStatus
+        - name: projectId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alerts page
+          content:
+            application/json:
+              schema:
+                $ref: ./alerts.schemas.yaml#/components/schemas/RiskAlertListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/alerts/{alertId}/acknowledge:
+    post:
+      operationId: acknowledgeAlert
+      tags: [Alerts]
+      summary: Acknowledge an alert
+      x-repository: Alert
+      x-dynamodb:
+        entityType: ALERT
+        pkPatternTemplate: 'ALERT#${alertId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: triggeredAt
+        updatedAtField: triggeredAt
+        softDeleteEnabled: false
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            $ref: ./alerts.schemas.yaml#/components/schemas/AlertId
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      responses:
+        '200':
+          description: Acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: ./alerts.schemas.yaml#/components/schemas/RiskAlertResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/alerts/{alertId}/snooze:
+    post:
+      operationId: snoozeAlert
+      tags: [Alerts]
+      summary: Snooze an alert with audit note
+      x-repository: Alert
+      x-dynamodb:
+        entityType: ALERT
+        pkPatternTemplate: 'ALERT#${alertId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: triggeredAt
+        updatedAtField: triggeredAt
+        softDeleteEnabled: false
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            $ref: ./alerts.schemas.yaml#/components/schemas/AlertId
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./alerts.schemas.yaml#/components/schemas/AlertSnoozeRequest
+      responses:
+        '200':
+          description: Snoozed
+          content:
+            application/json:
+              schema:
+                $ref: ./alerts.schemas.yaml#/components/schemas/RiskAlertResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/alert-policies:
+    get:
+      operationId: listAlertPolicies
+      tags: [Alerts]
+      summary: List workspace threshold policies
+      x-repository: AlertPolicy
+      x-dynamodb:
+        entityType: ALERT_POLICY
+        pkPatternTemplate: 'ALERT_POLICY#${policyId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Policies
+          content:
+            application/json:
+              schema:
+                $ref: ./alerts.schemas.yaml#/components/schemas/AlertPolicyListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createAlertPolicy
+      tags: [Alerts]
+      summary: Create workspace alert policy
+      x-repository: AlertPolicy
+      x-dynamodb:
+        entityType: ALERT_POLICY
+        pkPatternTemplate: 'ALERT_POLICY#${policyId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./alerts.schemas.yaml#/components/schemas/AlertPolicyCreate
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: ./alerts.schemas.yaml#/components/schemas/AlertPolicyResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/alert-policies/{policyId}:
+    get:
+      operationId: getAlertPolicy
+      tags: [Alerts]
+      summary: Get alert policy
+      x-repository: AlertPolicy
+      x-dynamodb:
+        entityType: ALERT_POLICY
+        pkPatternTemplate: 'ALERT_POLICY#${policyId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            $ref: ./alerts.schemas.yaml#/components/schemas/PolicyId
+      responses:
+        '200':
+          description: Policy
+          content:
+            application/json:
+              schema:
+                $ref: ./alerts.schemas.yaml#/components/schemas/AlertPolicyResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    patch:
+      operationId: updateAlertPolicy
+      tags: [Alerts]
+      summary: Update workspace thresholds
+      x-repository: AlertPolicy
+      x-dynamodb:
+        entityType: ALERT_POLICY
+        pkPatternTemplate: 'ALERT_POLICY#${policyId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: updatedAt
+        softDeleteEnabled: false
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            $ref: ./alerts.schemas.yaml#/components/schemas/PolicyId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./alerts.schemas.yaml#/components/schemas/AlertPolicyCreate
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: ./alerts.schemas.yaml#/components/schemas/AlertPolicyResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

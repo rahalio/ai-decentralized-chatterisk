@@ -1,0 +1,11 @@
+---
+description: Never commit or push the .codegen directory
+alwaysApply: true
+---
+
+# `.codegen` must never be committed or pushed to GitHub
+
+- Do not `git add` `.codegen/` or any file under it.
+- Do not force-add ignored codegen paths.
+- The Python `zero-codegen` tool lives locally in `.codegen/` (copied from the scaffold). GitHub clones must copy that directory from the scaffold again if they need to regenerate.
+- Run `git status` before commits and unstage `.codegen` if it appears.

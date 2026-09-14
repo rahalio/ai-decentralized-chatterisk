@@ -1,0 +1,99 @@
+openapi: 3.1.0
+info:
+  title: Dossiers schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    DossierId:
+      type: string
+      pattern: '^dos_[0-9A-HJKMNP-TV-Z]{26}$'
+    DossierStatus:
+      type: string
+      enum: [pending, ready, failed]
+    NiaDisclaimer:
+      type: string
+      default: 'Risk intelligence only; not investment advice.'
+
+    DossierExport:
+      type: object
+      required:
+        - dossierId
+        - projectId
+        - status
+        - periodStart
+        - periodEnd
+        - disclaimer
+      properties:
+        dossierId:
+          $ref: '#/components/schemas/DossierId'
+        projectId:
+          type: string
+        periodStart:
+          type: string
+          format: date-time
+        periodEnd:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/DossierStatus'
+        modelVersion:
+          type: string
+        contentHash:
+          type: string
+        niaWatermark:
+          type: boolean
+          default: true
+        downloadUrl:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+        disclaimer:
+          $ref: '#/components/schemas/NiaDisclaimer'
+
+    DossierExportCreate:
+      type: object
+      required:
+        - projectId
+        - periodStart
+        - periodEnd
+      properties:
+        projectId:
+          type: string
+        periodStart:
+          type: string
+          format: date-time
+        periodEnd:
+          type: string
+          format: date-time
+
+    DossierExportListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DossierExport'
+        nextCursor:
+          type: string
+
+    DossierExportResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/DossierExport'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    DossierExportListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/DossierExportListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

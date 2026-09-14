@@ -118,8 +118,8 @@ flowchart TD
 
 ## OpenAPI skeleton
 
-Canonical HTTP surface lives in sibling [openapi.yaml](openapi.yaml). Summarize here:
+Canonical HTTP surface lives as one OpenAPI file per domain under [`packages/openapi-core/src/`](packages/openapi-core/src/). Root [openapi.yaml](openapi.yaml) is a pointer only.
 
-- **Base path:** `/v1/...`
+- **Base path:** `/v1/...` (identity remains `/v0/...`)
 - **Auth:** API key for partner apps; Bearer JWT for analyst consoles
-- **Resource groups:** Projects, Comments, Aggregates, Alerts, Dossiers, ExternalLinks
+- **Domains:** Projects, Comments, Aggregates, Alerts, Dossiers, ExternalLinks

@@ -1,0 +1,362 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const createExternalLink_Body = z
+  .object({
+    projectId: z.string(),
+    contractAddress: z.string().optional(),
+    externalScanId: z.string(),
+    provider: z.string().optional(),
+    url: z.string().url().optional(),
+  })
+  .passthrough();
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const LinkId = z.string();
+const ExternalScanLink = z
+  .object({
+    linkId: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+    projectId: z.string(),
+    contractAddress: z.string().optional(),
+    externalScanId: z.string(),
+    provider: z.string().optional(),
+    url: z.string().url().optional(),
+    createdAt: z.string().datetime({ offset: true }),
+    disclaimer: z
+      .string()
+      .optional()
+      .default('Social risk only; Chatterisk does not scan bytecode.'),
+  })
+  .passthrough();
+const ExternalScanLinkListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          linkId: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+          projectId: z.string(),
+          contractAddress: z.string().optional(),
+          externalScanId: z.string(),
+          provider: z.string().optional(),
+          url: z.string().url().optional(),
+          createdAt: z.string().datetime({ offset: true }),
+          disclaimer: z
+            .string()
+            .optional()
+            .default('Social risk only; Chatterisk does not scan bytecode.'),
+        })
+        .passthrough()
+    ),
+    nextCursor: z.string().optional(),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const ExternalScanLinkListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              linkId: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+              projectId: z.string(),
+              contractAddress: z.string().optional(),
+              externalScanId: z.string(),
+              provider: z.string().optional(),
+              url: z.string().url().optional(),
+              createdAt: z.string().datetime({ offset: true }),
+              disclaimer: z
+                .string()
+                .optional()
+                .default(
+                  'Social risk only; Chatterisk does not scan bytecode.'
+                ),
+            })
+            .passthrough()
+        ),
+        nextCursor: z.string().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const ExternalScanLinkCreate = z
+  .object({
+    projectId: z.string(),
+    contractAddress: z.string().optional(),
+    externalScanId: z.string(),
+    provider: z.string().optional(),
+    url: z.string().url().optional(),
+  })
+  .passthrough();
+const ExternalScanLinkResponse = z
+  .object({
+    data: z
+      .object({
+        linkId: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+        projectId: z.string(),
+        contractAddress: z.string().optional(),
+        externalScanId: z.string(),
+        provider: z.string().optional(),
+        url: z.string().url().optional(),
+        createdAt: z.string().datetime({ offset: true }),
+        disclaimer: z
+          .string()
+          .optional()
+          .default('Social risk only; Chatterisk does not scan bytecode.'),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  createExternalLink_Body,
+  Problem,
+  LinkId,
+  ExternalScanLink,
+  ExternalScanLinkListData,
+  ResponseMeta,
+  ExternalScanLinkListResponse,
+  ExternalScanLinkCreate,
+  ExternalScanLinkResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/external-links',
+    alias: 'listExternalLinks',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(100).optional().default(25),
+      },
+      {
+        name: 'projectId',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  linkId: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  projectId: z.string(),
+                  contractAddress: z.string().optional(),
+                  externalScanId: z.string(),
+                  provider: z.string().optional(),
+                  url: z.string().url().optional(),
+                  createdAt: z.string().datetime({ offset: true }),
+                  disclaimer: z
+                    .string()
+                    .optional()
+                    .default(
+                      'Social risk only; Chatterisk does not scan bytecode.'
+                    ),
+                })
+                .passthrough()
+            ),
+            nextCursor: z.string().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+  },
+  {
+    method: 'post',
+    path: '/v1/external-links',
+    alias: 'createExternalLink',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: createExternalLink_Body,
+      },
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            linkId: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+            projectId: z.string(),
+            contractAddress: z.string().optional(),
+            externalScanId: z.string(),
+            provider: z.string().optional(),
+            url: z.string().url().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            disclaimer: z
+              .string()
+              .optional()
+              .default('Social risk only; Chatterisk does not scan bytecode.'),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+  },
+  {
+    method: 'get',
+    path: '/v1/external-links/:linkId',
+    alias: 'getExternalLink',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'linkId',
+        type: 'Path',
+        schema: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            linkId: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+            projectId: z.string(),
+            contractAddress: z.string().optional(),
+            externalScanId: z.string(),
+            provider: z.string().optional(),
+            url: z.string().url().optional(),
+            createdAt: z.string().datetime({ offset: true }),
+            disclaimer: z
+              .string()
+              .optional()
+              .default('Social risk only; Chatterisk does not scan bytecode.'),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'delete',
+    path: '/v1/external-links/:linkId',
+    alias: 'deleteExternalLink',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'linkId',
+        type: 'Path',
+        schema: z.string().regex(/^lnk_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

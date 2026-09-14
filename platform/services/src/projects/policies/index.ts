@@ -1,0 +1,9 @@
+/**
+ * Projects Policies
+ *
+ * DDD: Application policies for projects domain.
+ */
+
+export * from "./can-create.policy.js";
+export * from "./can-update.policy.js";
+export * from "./can-delete.policy.js";

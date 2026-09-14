@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: Projects schemas
+  version: 0.1.0
+  description: Token/project registry and listing-desk watchlist.
+paths: {}
+components:
+  schemas:
+    ProjectId:
+      type: string
+      pattern: '^prj_[0-9A-HJKMNP-TV-Z]{26}$'
+      description: Prefixed project id.
+
+    NiaDisclaimer:
+      type: string
+      description: Locked not-investment-advice label (BR-7).
+      default: 'Risk intelligence only; not investment advice.'
+
+    RiskProject:
+      type: object
+      required:
+        - projectId
+        - name
+        - watched
+        - createdAt
+        - updatedAt
+      properties:
+        projectId:
+          $ref: '#/components/schemas/ProjectId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        ticker:
+          type: string
+          maxLength: 32
+        contractAddress:
+          type: string
+          description: EVM contract address correlation handle (BR-6).
+        aliases:
+          type: array
+          items:
+            type: string
+        watched:
+          type: boolean
+          description: Listing-desk watchlist membership.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        disclaimer:
+          $ref: '#/components/schemas/NiaDisclaimer'
+
+    RiskProjectCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        ticker:
+          type: string
+        contractAddress:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+        watched:
+          type: boolean
+          default: true
+
+    RiskProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        ticker:
+          type: string
+        contractAddress:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+
+    RiskProjectListData:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskProject'
+        nextCursor:
+          type: string
+
+    RiskProjectResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/RiskProject'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    RiskProjectListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/RiskProjectListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

@@ -1,0 +1,144 @@
+openapi: 3.1.0
+info:
+  title: External links API
+  version: 0.1.0
+  description: Correlation handles to external vulnerability scans (BR-6). Chatterisk does not scan bytecode.
+  x-domain: lnk
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.chatterisk.local
+security:
+  - bearerAuth: []
+  - apiKey: []
+tags:
+  - name: ExternalLinks
+    description: Links to external vuln scans
+paths:
+  /v1/external-links:
+    get:
+      operationId: listExternalLinks
+      tags: [ExternalLinks]
+      summary: List external scan links
+      x-repository: ExternalLink
+      x-dynamodb:
+        entityType: EXTERNAL_LINK
+        pkPatternTemplate: 'EXTERNAL_LINK#${linkId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        gsi1PKPatternTemplate: 'PROJECT#${projectId}'
+        createdAtField: createdAt
+        updatedAtField: createdAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: projectId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Links page
+          content:
+            application/json:
+              schema:
+                $ref: ./external-links.schemas.yaml#/components/schemas/ExternalScanLinkListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createExternalLink
+      tags: [ExternalLinks]
+      summary: Attach an external scan reference
+      x-repository: ExternalLink
+      x-dynamodb:
+        entityType: EXTERNAL_LINK
+        pkPatternTemplate: 'EXTERNAL_LINK#${linkId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        gsi1PKPatternTemplate: 'PROJECT#${projectId}'
+        createdAtField: createdAt
+        updatedAtField: createdAt
+        softDeleteEnabled: false
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./external-links.schemas.yaml#/components/schemas/ExternalScanLinkCreate
+      responses:
+        '201':
+          description: Link created
+          content:
+            application/json:
+              schema:
+                $ref: ./external-links.schemas.yaml#/components/schemas/ExternalScanLinkResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/external-links/{linkId}:
+    get:
+      operationId: getExternalLink
+      tags: [ExternalLinks]
+      summary: Get an external scan link
+      x-repository: ExternalLink
+      x-dynamodb:
+        entityType: EXTERNAL_LINK
+        pkPatternTemplate: 'EXTERNAL_LINK#${linkId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: createdAt
+        softDeleteEnabled: false
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            $ref: ./external-links.schemas.yaml#/components/schemas/LinkId
+      responses:
+        '200':
+          description: Link
+          content:
+            application/json:
+              schema:
+                $ref: ./external-links.schemas.yaml#/components/schemas/ExternalScanLinkResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    delete:
+      operationId: deleteExternalLink
+      tags: [ExternalLinks]
+      summary: Unlink an external scan
+      x-repository: ExternalLink
+      x-dynamodb:
+        entityType: EXTERNAL_LINK
+        pkPatternTemplate: 'EXTERNAL_LINK#${linkId}'
+        skPatternTemplate: METADATA
+        pkPattern: entity
+        createdAtField: createdAt
+        updatedAtField: createdAt
+        softDeleteEnabled: false
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            $ref: ./external-links.schemas.yaml#/components/schemas/LinkId
+      responses:
+        '204':
+          description: Unlinked
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

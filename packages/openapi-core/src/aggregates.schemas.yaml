@@ -1,0 +1,150 @@
+openapi: 3.1.0
+info:
+  title: Aggregates schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    AggregateId:
+      type: string
+      pattern: '^agg_[0-9A-HJKMNP-TV-Z]{26}$'
+    ScoreWindow:
+      type: string
+      enum: [1d, 7d, 30d]
+    ChannelMix:
+      type: object
+      properties:
+        twitter:
+          type: integer
+          minimum: 0
+        telegram:
+          type: integer
+          minimum: 0
+        facebook:
+          type: integer
+          minimum: 0
+        other:
+          type: integer
+          minimum: 0
+    NiaDisclaimer:
+      type: string
+      default: 'Risk intelligence only; not investment advice.'
+
+    ProjectAggregate:
+      type: object
+      required:
+        - aggregateId
+        - projectId
+        - window
+        - adjustedScore
+        - sampleSize
+        - modelVersion
+        - thinSample
+        - disclaimer
+      properties:
+        aggregateId:
+          $ref: '#/components/schemas/AggregateId'
+        projectId:
+          type: string
+        contractAddress:
+          type: string
+        window:
+          $ref: '#/components/schemas/ScoreWindow'
+        rawMeanScore:
+          type: number
+          minimum: -1
+          maximum: 1
+        adjustedScore:
+          type: number
+          minimum: -1
+          maximum: 1
+          description: Volume-adjusted score Score_adj = Score_orig * W (BR-2).
+        volumeWeight:
+          type: number
+          minimum: 0
+        sampleSize:
+          type: integer
+          minimum: 0
+        botDownweightedCount:
+          type: integer
+          minimum: 0
+        botExclusionVolume:
+          type: number
+          minimum: 0
+        positiveProbability:
+          type: number
+        negativeProbability:
+          type: number
+        channelMix:
+          $ref: '#/components/schemas/ChannelMix'
+        thinSample:
+          type: boolean
+        modelVersion:
+          type: string
+        computedAt:
+          type: string
+          format: date-time
+        disclaimer:
+          $ref: '#/components/schemas/NiaDisclaimer'
+
+    PartnerRiskBadge:
+      type: object
+      required:
+        - state
+        - disclaimer
+      properties:
+        projectId:
+          type: string
+        contractAddress:
+          type: string
+        adjustedScore:
+          type: number
+        sampleSize:
+          type: integer
+        thinSample:
+          type: boolean
+        state:
+          type: string
+          enum: [stable, high_risk, insufficient_sample, unknown]
+        externalScanLinked:
+          type: boolean
+        disclaimer:
+          $ref: '#/components/schemas/NiaDisclaimer'
+
+    ProjectAggregateListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectAggregate'
+        nextCursor:
+          type: string
+
+    ProjectAggregateResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ProjectAggregate'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    ProjectAggregateListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ProjectAggregateListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    PartnerRiskBadgeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PartnerRiskBadge'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

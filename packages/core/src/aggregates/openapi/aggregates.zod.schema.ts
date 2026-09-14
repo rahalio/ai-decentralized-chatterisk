@@ -1,0 +1,485 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const ScoreWindow = z.enum(['1d', '7d', '30d']);
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const AggregateId = z.string();
+const ChannelMix = z
+  .object({
+    twitter: z.number().int().gte(0),
+    telegram: z.number().int().gte(0),
+    facebook: z.number().int().gte(0),
+    other: z.number().int().gte(0),
+  })
+  .partial()
+  .passthrough();
+const NiaDisclaimer = z.string();
+const ProjectAggregate = z
+  .object({
+    aggregateId: z.string().regex(/^agg_[0-9A-HJKMNP-TV-Z]{26}$/),
+    projectId: z.string(),
+    contractAddress: z.string().optional(),
+    window: z.enum(['1d', '7d', '30d']),
+    rawMeanScore: z.number().gte(-1).lte(1).optional(),
+    adjustedScore: z.number().gte(-1).lte(1),
+    volumeWeight: z.number().gte(0).optional(),
+    sampleSize: z.number().int().gte(0),
+    botDownweightedCount: z.number().int().gte(0).optional(),
+    botExclusionVolume: z.number().gte(0).optional(),
+    positiveProbability: z.number().optional(),
+    negativeProbability: z.number().optional(),
+    channelMix: z
+      .object({
+        twitter: z.number().int().gte(0),
+        telegram: z.number().int().gte(0),
+        facebook: z.number().int().gte(0),
+        other: z.number().int().gte(0),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+    thinSample: z.boolean(),
+    modelVersion: z.string(),
+    computedAt: z.string().datetime({ offset: true }).optional(),
+    disclaimer: z
+      .string()
+      .default('Risk intelligence only; not investment advice.'),
+  })
+  .passthrough();
+const ProjectAggregateListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          aggregateId: z.string().regex(/^agg_[0-9A-HJKMNP-TV-Z]{26}$/),
+          projectId: z.string(),
+          contractAddress: z.string().optional(),
+          window: z.enum(['1d', '7d', '30d']),
+          rawMeanScore: z.number().gte(-1).lte(1).optional(),
+          adjustedScore: z.number().gte(-1).lte(1),
+          volumeWeight: z.number().gte(0).optional(),
+          sampleSize: z.number().int().gte(0),
+          botDownweightedCount: z.number().int().gte(0).optional(),
+          botExclusionVolume: z.number().gte(0).optional(),
+          positiveProbability: z.number().optional(),
+          negativeProbability: z.number().optional(),
+          channelMix: z
+            .object({
+              twitter: z.number().int().gte(0),
+              telegram: z.number().int().gte(0),
+              facebook: z.number().int().gte(0),
+              other: z.number().int().gte(0),
+            })
+            .partial()
+            .passthrough()
+            .optional(),
+          thinSample: z.boolean(),
+          modelVersion: z.string(),
+          computedAt: z.string().datetime({ offset: true }).optional(),
+          disclaimer: z
+            .string()
+            .default('Risk intelligence only; not investment advice.'),
+        })
+        .passthrough()
+    ),
+    nextCursor: z.string().optional(),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const ProjectAggregateListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              aggregateId: z.string().regex(/^agg_[0-9A-HJKMNP-TV-Z]{26}$/),
+              projectId: z.string(),
+              contractAddress: z.string().optional(),
+              window: z.enum(['1d', '7d', '30d']),
+              rawMeanScore: z.number().gte(-1).lte(1).optional(),
+              adjustedScore: z.number().gte(-1).lte(1),
+              volumeWeight: z.number().gte(0).optional(),
+              sampleSize: z.number().int().gte(0),
+              botDownweightedCount: z.number().int().gte(0).optional(),
+              botExclusionVolume: z.number().gte(0).optional(),
+              positiveProbability: z.number().optional(),
+              negativeProbability: z.number().optional(),
+              channelMix: z
+                .object({
+                  twitter: z.number().int().gte(0),
+                  telegram: z.number().int().gte(0),
+                  facebook: z.number().int().gte(0),
+                  other: z.number().int().gte(0),
+                })
+                .partial()
+                .passthrough()
+                .optional(),
+              thinSample: z.boolean(),
+              modelVersion: z.string(),
+              computedAt: z.string().datetime({ offset: true }).optional(),
+              disclaimer: z
+                .string()
+                .default('Risk intelligence only; not investment advice.'),
+            })
+            .passthrough()
+        ),
+        nextCursor: z.string().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const ProjectAggregateResponse = z
+  .object({
+    data: z
+      .object({
+        aggregateId: z.string().regex(/^agg_[0-9A-HJKMNP-TV-Z]{26}$/),
+        projectId: z.string(),
+        contractAddress: z.string().optional(),
+        window: z.enum(['1d', '7d', '30d']),
+        rawMeanScore: z.number().gte(-1).lte(1).optional(),
+        adjustedScore: z.number().gte(-1).lte(1),
+        volumeWeight: z.number().gte(0).optional(),
+        sampleSize: z.number().int().gte(0),
+        botDownweightedCount: z.number().int().gte(0).optional(),
+        botExclusionVolume: z.number().gte(0).optional(),
+        positiveProbability: z.number().optional(),
+        negativeProbability: z.number().optional(),
+        channelMix: z
+          .object({
+            twitter: z.number().int().gte(0),
+            telegram: z.number().int().gte(0),
+            facebook: z.number().int().gte(0),
+            other: z.number().int().gte(0),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+        thinSample: z.boolean(),
+        modelVersion: z.string(),
+        computedAt: z.string().datetime({ offset: true }).optional(),
+        disclaimer: z
+          .string()
+          .default('Risk intelligence only; not investment advice.'),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const PartnerRiskBadge = z
+  .object({
+    projectId: z.string().optional(),
+    contractAddress: z.string().optional(),
+    adjustedScore: z.number().optional(),
+    sampleSize: z.number().int().optional(),
+    thinSample: z.boolean().optional(),
+    state: z.enum(['stable', 'high_risk', 'insufficient_sample', 'unknown']),
+    externalScanLinked: z.boolean().optional(),
+    disclaimer: z
+      .string()
+      .default('Risk intelligence only; not investment advice.'),
+  })
+  .passthrough();
+const PartnerRiskBadgeResponse = z
+  .object({
+    data: z
+      .object({
+        projectId: z.string().optional(),
+        contractAddress: z.string().optional(),
+        adjustedScore: z.number().optional(),
+        sampleSize: z.number().int().optional(),
+        thinSample: z.boolean().optional(),
+        state: z.enum([
+          'stable',
+          'high_risk',
+          'insufficient_sample',
+          'unknown',
+        ]),
+        externalScanLinked: z.boolean().optional(),
+        disclaimer: z
+          .string()
+          .default('Risk intelligence only; not investment advice.'),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  ScoreWindow,
+  Problem,
+  AggregateId,
+  ChannelMix,
+  NiaDisclaimer,
+  ProjectAggregate,
+  ProjectAggregateListData,
+  ResponseMeta,
+  ProjectAggregateListResponse,
+  ProjectAggregateResponse,
+  PartnerRiskBadge,
+  PartnerRiskBadgeResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/aggregates/latest',
+    alias: 'getLatestAggregate',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'contractAddress',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'projectId',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'window',
+        type: 'Query',
+        schema: z.enum(['1d', '7d', '30d']).optional().default('7d'),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            aggregateId: z.string().regex(/^agg_[0-9A-HJKMNP-TV-Z]{26}$/),
+            projectId: z.string(),
+            contractAddress: z.string().optional(),
+            window: z.enum(['1d', '7d', '30d']),
+            rawMeanScore: z.number().gte(-1).lte(1).optional(),
+            adjustedScore: z.number().gte(-1).lte(1),
+            volumeWeight: z.number().gte(0).optional(),
+            sampleSize: z.number().int().gte(0),
+            botDownweightedCount: z.number().int().gte(0).optional(),
+            botExclusionVolume: z.number().gte(0).optional(),
+            positiveProbability: z.number().optional(),
+            negativeProbability: z.number().optional(),
+            channelMix: z
+              .object({
+                twitter: z.number().int().gte(0),
+                telegram: z.number().int().gte(0),
+                facebook: z.number().int().gte(0),
+                other: z.number().int().gte(0),
+              })
+              .partial()
+              .passthrough()
+              .optional(),
+            thinSample: z.boolean(),
+            modelVersion: z.string(),
+            computedAt: z.string().datetime({ offset: true }).optional(),
+            disclaimer: z
+              .string()
+              .default('Risk intelligence only; not investment advice.'),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/partner/risk-badge',
+    alias: 'getPartnerRiskBadge',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'contractAddress',
+        type: 'Query',
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            projectId: z.string().optional(),
+            contractAddress: z.string().optional(),
+            adjustedScore: z.number().optional(),
+            sampleSize: z.number().int().optional(),
+            thinSample: z.boolean().optional(),
+            state: z.enum([
+              'stable',
+              'high_risk',
+              'insufficient_sample',
+              'unknown',
+            ]),
+            externalScanLinked: z.boolean().optional(),
+            disclaimer: z
+              .string()
+              .default('Risk intelligence only; not investment advice.'),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+  },
+  {
+    method: 'get',
+    path: '/v1/projects/:projectId/aggregates',
+    alias: 'listProjectAggregates',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'projectId',
+        type: 'Path',
+        schema: z.string(),
+      },
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(100).optional().default(25),
+      },
+      {
+        name: 'window',
+        type: 'Query',
+        schema: z.enum(['1d', '7d', '30d']).optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  aggregateId: z.string().regex(/^agg_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  projectId: z.string(),
+                  contractAddress: z.string().optional(),
+                  window: z.enum(['1d', '7d', '30d']),
+                  rawMeanScore: z.number().gte(-1).lte(1).optional(),
+                  adjustedScore: z.number().gte(-1).lte(1),
+                  volumeWeight: z.number().gte(0).optional(),
+                  sampleSize: z.number().int().gte(0),
+                  botDownweightedCount: z.number().int().gte(0).optional(),
+                  botExclusionVolume: z.number().gte(0).optional(),
+                  positiveProbability: z.number().optional(),
+                  negativeProbability: z.number().optional(),
+                  channelMix: z
+                    .object({
+                      twitter: z.number().int().gte(0),
+                      telegram: z.number().int().gte(0),
+                      facebook: z.number().int().gte(0),
+                      other: z.number().int().gte(0),
+                    })
+                    .partial()
+                    .passthrough()
+                    .optional(),
+                  thinSample: z.boolean(),
+                  modelVersion: z.string(),
+                  computedAt: z.string().datetime({ offset: true }).optional(),
+                  disclaimer: z
+                    .string()
+                    .default('Risk intelligence only; not investment advice.'),
+                })
+                .passthrough()
+            ),
+            nextCursor: z.string().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

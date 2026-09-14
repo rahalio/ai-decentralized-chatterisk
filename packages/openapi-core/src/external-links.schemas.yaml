@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: External links schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    LinkId:
+      type: string
+      pattern: '^lnk_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    ExternalScanLink:
+      type: object
+      required:
+        - linkId
+        - projectId
+        - externalScanId
+        - createdAt
+      properties:
+        linkId:
+          $ref: '#/components/schemas/LinkId'
+        projectId:
+          type: string
+        contractAddress:
+          type: string
+        externalScanId:
+          type: string
+        provider:
+          type: string
+        url:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+        disclaimer:
+          type: string
+          default: 'Social risk only; Chatterisk does not scan bytecode.'
+
+    ExternalScanLinkCreate:
+      type: object
+      required:
+        - projectId
+        - externalScanId
+      properties:
+        projectId:
+          type: string
+        contractAddress:
+          type: string
+        externalScanId:
+          type: string
+        provider:
+          type: string
+        url:
+          type: string
+          format: uri
+
+    ExternalScanLinkListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalScanLink'
+        nextCursor:
+          type: string
+
+    ExternalScanLinkResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ExternalScanLink'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    ExternalScanLinkListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ExternalScanLinkListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
